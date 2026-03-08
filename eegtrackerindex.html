@@ -1,0 +1,2981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>EEGs tracker · Seguimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --granate: #a80517;
+    --vino: #4C0A10;
+    --rosa: #e598b7;
+    --rosa-light: #fdf0f5;
+    --cream: #faf7f4;
+    --white: #ffffff;
+    --text: #2a0a0e;
+    --muted: #9a7070;
+    --font-title: 'Lora', Georgia, serif;
+    --font-body: 'DM Sans', sans-serif;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: var(--white);
+    padding: calc(var(--safe-top) + 16px) 20px 0;
+    border-bottom: 1px solid #f0e8e8;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .brand {
+    font-family: var(--font-title);
+    font-size: 22px;
+    color: var(--granate);
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  .brand span { color: var(--rosa); }
+  .day-badge {
+    background: var(--granate);
+    color: white;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    margin: 0 -20px;
+  }
+  .nav-tab {
+    flex: 1;
+    padding: 10px 4px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .nav-tab.active {
+    color: var(--granate);
+    border-bottom-color: var(--granate);
+  }
+  .nav-tab .tab-icon { display: block; font-size: 16px; margin-bottom: 2px; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex: 1; overflow-y: auto; padding-bottom: calc(var(--safe-bottom) + 20px); }
+  .screen.active { display: block; }
+
+  /* ── REGISTRAR SCREEN ── */
+  .registro-hero {
+    background: linear-gradient(135deg, var(--vino) 0%, var(--granate) 100%);
+    padding: 24px 20px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .registro-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 150px; height: 150px;
+    background: rgba(229,152,183,0.15);
+    border-radius: 50%;
+  }
+  .registro-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 20px;
+    width: 80px; height: 80px;
+    background: rgba(229,152,183,0.1);
+    border-radius: 50%;
+  }
+  .time-greeting {
+    font-family: var(--font-title);
+    font-size: 26px;
+    color: white;
+    font-weight: 600;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
+  }
+  .time-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+    position: relative;
+    z-index: 1;
+  }
+  .kitchen-alert {
+    background: rgba(229,152,183,0.25);
+    border: 1px solid rgba(229,152,183,0.5);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .kitchen-alert.warning { background: rgba(255,180,0,0.2); border-color: rgba(255,180,0,0.4); }
+  .kitchen-alert.danger { background: rgba(255,80,80,0.2); border-color: rgba(255,100,100,0.4); }
+
+  /* ── MEAL SLOTS ── */
+  .meals-section { padding: 20px; }
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .meal-slot {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid transparent;
+    position: relative;
+  }
+  .meal-slot:active { transform: scale(0.98); }
+  .meal-slot.logged { border-color: var(--rosa); background: var(--rosa-light); }
+  .meal-slot.current { border-color: var(--granate); box-shadow: 0 2px 12px rgba(168,5,23,0.12); }
+  .meal-time {
+    font-family: var(--font-title);
+    font-size: 13px;
+    color: var(--granate);
+    font-weight: 600;
+    min-width: 38px;
+  }
+  .meal-info { flex: 1 }
+  .meal-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .meal-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .meal-check {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .meal-slot.logged .meal-check {
+    background: var(--rosa);
+    border-color: var(--rosa);
+    color: white;
+  }
+  .meal-slot.current .meal-check {
+    border-color: var(--granate);
+  }
+
+  /* ── IA CHAT ── */
+  .ia-section { padding: 0 20px 20px; }
+  .ia-card {
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1.5px solid #f0e0e6;
+  }
+  .ia-card-header {
+    background: linear-gradient(135deg, var(--rosa-light), var(--white));
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0e0e6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ia-avatar {
+    width: 32px; height: 32px;
+    background: var(--granate);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .ia-title { font-size: 13px; font-weight: 500; color: var(--vino); }
+  .ia-subtitle { font-size: 11px; color: var(--muted); }
+
+  .chat-messages {
+    padding: 14px 16px;
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg {
+    max-width: 88%;
+    padding: 10px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    animation: msgIn 0.25s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.ai {
+    background: var(--rosa-light);
+    color: var(--vino);
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+    border: 1px solid #f0dde8;
+  }
+  .msg.user {
+    background: var(--granate);
+    color: white;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
+  }
+  .msg.loading { background: var(--rosa-light); align-self: flex-start; }
+  .dots span {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--rosa);
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: dot 1.2s infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dot { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+  .chat-input-area {
+    padding: 12px 14px;
+    border-top: 1px solid #f0e0e6;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    background: var(--white);
+  }
+  .chat-input {
+    flex: 1;
+    border: 1.5px solid #e8d8de;
+    border-radius: 20px;
+    padding: 10px 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--cream);
+    resize: none;
+    outline: none;
+    max-height: 100px;
+    line-height: 1.4;
+    transition: border-color 0.2s;
+  }
+  .chat-input:focus { border-color: var(--rosa); }
+  .send-btn {
+    width: 40px; height: 40px;
+    background: var(--granate);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .send-btn:active { transform: scale(0.92); background: var(--vino); }
+  .send-btn:disabled { background: #ddd; cursor: not-allowed; }
+
+  /* Quick prompts */
+  .quick-prompts {
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid #f0e0e6;
+  }
+  .quick-prompts::-webkit-scrollbar { display: none; }
+  .qp {
+    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: var(--rosa-light);
+    border: 1px solid #f0dde8;
+    font-size: 12px;
+    color: var(--vino);
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .qp:active { background: var(--rosa); color: white; }
+
+  /* ── SEGUIMIENTO SCREEN ── */
+  .seguimiento-header {
+    padding: 20px 20px 0;
+  }
+  .prog-title {
+    font-family: var(--font-title);
+    font-size: 24px;
+    color: var(--vino);
+    font-weight: 600;
+  }
+  .prog-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .progress-container { padding: 20px; }
+  .progress-ring-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--white);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .ring-svg { width: 90px; height: 90px; flex-shrink: 0; }
+  .ring-bg { fill: none; stroke: #f0e0e6; stroke-width: 8; }
+  .ring-fill { fill: none; stroke: var(--granate); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease; transform: rotate(-90deg); transform-origin: 50% 50%; }
+  .ring-center { text-anchor: middle; dominant-baseline: middle; }
+  .ring-day { font-family: 'Lora', serif; font-size: 22px; fill: var(--granate); font-weight: 600; }
+  .ring-label { font-size: 9px; fill: var(--muted); }
+  .ring-info { flex: 1 }
+  .ring-info-title { font-family: var(--font-title); font-size: 17px; color: var(--vino); font-weight: 600; }
+  .ring-info-sub { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+  /* Score cards */
+  .score-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .score-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .score-val {
+    font-family: var(--font-title);
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .score-val.good { color: var(--granate); }
+  .score-val.warn { color: #d4780a; }
+  .score-val.neutral { color: var(--muted); }
+  .score-label { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.3; }
+
+  /* Daily log list */
+  .log-section { padding: 0 20px 20px; }
+  .log-day-entry {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .log-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .log-day-title { font-weight: 500; font-size: 14px; color: var(--vino); }
+  .log-day-score {
+    font-family: var(--font-title);
+    font-size: 13px;
+    color: var(--granate);
+    font-weight: 600;
+  }
+  .log-meal-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px solid #f5edf0;
+  }
+  .log-meal-item:last-child { border-bottom: none; }
+  .log-meal-time { font-size: 11px; color: var(--muted); min-width: 32px; padding-top: 1px; }
+  .log-meal-text { font-size: 13px; color: var(--text); line-height: 1.4; flex: 1; }
+  .log-meal-ok { font-size: 14px; }
+
+  /* ── PATRONES SCREEN ── */
+  .patrones-header { padding: 20px 20px 0; }
+  .patrones-content { padding: 16px 20px; }
+  .patron-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .patron-icon {
+    width: 40px; height: 40px;
+    background: var(--rosa-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .patron-title { font-size: 14px; font-weight: 500; color: var(--vino); margin-bottom: 4px; }
+  .patron-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .patron-status {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .patron-status.ok { background: #e8f5e9; color: #2e7d32; }
+  .patron-status.warn { background: #fff8e1; color: #f57f17; }
+  .patron-status.check { background: var(--rosa-light); color: var(--granate); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(76,10,16,0.5);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px calc(var(--safe-bottom) + 24px);
+    width: 100%;
+    max-height: 85dvh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: #e0d0d4;
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-family: var(--font-title);
+    font-size: 20px;
+    color: var(--vino);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  .food-textarea {
+    width: 100%;
+    border: 1.5px solid #e8d8de;
+    border-radius: 14px;
+    padding: 14px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--text);
+    background: var(--cream);
+    resize: none;
+    height: 100px;
+    outline: none;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+  .food-textarea:focus { border-color: var(--rosa); }
+
+  .modal-options { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .opt-chip {
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: var(--rosa-light);
+    border: 1px solid #f0dde8;
+    font-size: 13px;
+    color: var(--vino);
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+  .opt-chip.sel { background: var(--granate); color: white; border-color: var(--granate); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--granate);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary:active { background: var(--vino); transform: scale(0.98); }
+  .btn-secondary {
+    width: 100%;
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid #e8d8de;
+    border-radius: 14px;
+    padding: 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* AI feedback in modal */
+  .ai-feedback {
+    background: var(--rosa-light);
+    border: 1px solid #f0dde8;
+    border-radius: 14px;
+    padding: 14px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--vino);
+    line-height: 1.6;
+    display: none;
+  }
+  .ai-feedback.show { display: block; animation: msgIn 0.3s ease; }
+  .ai-feedback-label {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--rosa);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .score-stars { font-size: 20px; letter-spacing: 2px; margin-top: 4px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--rosa); border-radius: 2px; }
+
+  /* ── ZEPP SCREEN ── */
+  .zepp-steps-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px;
+    border-left: 3px solid var(--granate);
+  }
+  .zepp-steps-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--granate);
+    margin-bottom: 12px;
+  }
+  .zepp-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 13px;
+    color: var(--vino);
+    line-height: 1.4;
+  }
+  .zepp-step-num {
+    width: 20px; height: 20px;
+    background: var(--rosa-light);
+    border: 1px solid var(--rosa);
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--granate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--rosa);
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    background: var(--rosa-light);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-zone:active { background: #f5e0ec; border-color: var(--granate); }
+  .upload-zone.dragover { background: #f5e0ec; border-color: var(--granate); transform: scale(1.01); }
+  .upload-icon { font-size: 32px; margin-bottom: 8px; color: var(--granate); }
+  .upload-title { font-size: 15px; font-weight: 500; color: var(--vino); margin-bottom: 4px; }
+  .upload-sub { font-size: 12px; color: var(--muted); }
+
+  .manual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .manual-field { display: flex; flex-direction: column; gap: 4px; }
+  .manual-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .manual-input {
+    border: 1.5px solid #e8d8de;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--text);
+    background: var(--cream);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .manual-input:focus { border-color: var(--rosa); }
+
+  .zepp-analysis-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 18px;
+    font-size: 13.5px;
+    color: var(--vino);
+    line-height: 1.7;
+    border-top: 3px solid var(--granate);
+  }
+  .zepp-analysis-card strong { color: var(--granate); }
+
+  .activity-day-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .activity-day-icon {
+    width: 38px; height: 38px;
+    background: var(--rosa-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .activity-day-info { flex: 1; }
+  .activity-day-title { font-size: 13px; font-weight: 500; color: var(--vino); }
+  .activity-day-stats { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .activity-day-score {
+    font-family: var(--font-title);
+    font-size: 20px;
+    color: var(--granate);
+    font-weight: 600;
+  }
+
+  /* ── PHOTO UPLOAD ── */
+  .photo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .photo-zone {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1.5px dashed var(--rosa);
+    border-radius: 12px;
+    background: var(--rosa-light);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--vino);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .photo-zone:active { background: #f5e0ec; }
+  .photo-zone.has-photo { border-style: solid; border-color: var(--granate); background: #fff8f9; }
+  .photo-preview {
+    width: 64px; height: 64px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1.5px solid var(--rosa);
+    flex-shrink: 0;
+  }
+  .photo-remove {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 20px; height: 20px;
+    background: var(--granate);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── CUIDADOS ── */
+  .cuidado-entry {
+    background: var(--white); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 6px;
+    display: flex; align-items: flex-start; gap: 10px;
+    border-left: 3px solid var(--rosa);
+  }
+  .cuidado-entry-icon { font-size: 18px; flex-shrink: 0; padding-top: 2px; }
+  .cuidado-entry-info { flex: 1; }
+  .cuidado-entry-name { font-size: 14px; font-weight: 500; color: var(--vino); }
+  .cuidado-entry-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .cuidado-entry-del {
+    background: none; border: 1px solid #e8d8de; border-radius: 8px;
+    padding: 3px 9px; font-size: 11px; color: var(--muted);
+    cursor: pointer; flex-shrink: 0;
+  }
+  .cuidado-entry-del:active { background: #f5e8ea; color: var(--granate); }
+  .cuidado-add-form {
+    background: var(--white); border-radius: 14px;
+    padding: 14px; margin-top: 6px;
+  }
+  .cuidado-tipos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .cuidado-tipo-btn {
+    border: 1.5px solid #e8d8de; border-radius: 20px;
+    background: var(--cream); padding: 5px 12px;
+    font-size: 12px; color: var(--vino); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cuidado-tipo-btn.selected {
+    background: var(--rosa-light); border-color: var(--rosa);
+    color: var(--granate); font-weight: 600;
+  }
+  .cuidado-input {
+    width: 100%; border: 1.5px solid #e8d8de; border-radius: 10px;
+    padding: 8px 12px; font-family: var(--font-body); font-size: 13px;
+    color: var(--vino); background: var(--cream); outline: none;
+    margin-bottom: 8px; box-sizing: border-box;
+  }
+  .cuidado-input:focus { border-color: var(--rosa); }
+  .cuidado-save-btn {
+    width: 100%; padding: 12px; border: none; border-radius: 12px;
+    background: var(--granate); color: white;
+    font-family: var(--font-body); font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 2px; transition: background 0.15s;
+  }
+  .cuidado-save-btn:active { background: var(--vino); }
+
+  /* ── SUPLEMENTOS ── */
+  .supl-slot {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 13px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .supl-slot:active { transform: scale(0.98); }
+  .supl-slot.checked { border-color: var(--rosa); background: var(--rosa-light); }
+  .supl-icon { font-size: 22px; flex-shrink: 0; }
+  .supl-info { flex: 1; }
+  .supl-name { font-size: 14px; font-weight: 500; color: var(--vino); }
+  .supl-desc { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .supl-check {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid #ddd;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; transition: all 0.18s;
+    color: transparent;
+  }
+  .supl-slot.checked .supl-check {
+    background: var(--rosa); border-color: var(--rosa); color: white;
+  }
+  .supl-timing {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #f5edf0;
+    color: var(--granate);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+
+  .supl-tip-card {
+    background: linear-gradient(135deg, #fff8f0, var(--white));
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    border-left: 3px solid #e8a040;
+    margin-bottom: 4px;
+  }
+  .supl-tip-icon { font-size: 22px; flex-shrink: 0; padding-top: 2px; }
+  .supl-tip-title { font-size: 13px; font-weight: 600; color: #a06010; margin-bottom: 5px; }
+  .supl-tip-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* Weekly grid */
+  .supl-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .supl-week-header {
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 500;
+    padding-bottom: 4px;
+  }
+  .supl-week-cell {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600;
+  }
+  .supl-week-cell.full { background: var(--rosa); color: white; }
+  .supl-week-cell.partial { background: #f5dde8; color: var(--granate); }
+  .supl-week-cell.empty { background: #f5f0f0; color: var(--muted); }
+  .supl-week-cell.future { background: transparent; color: #e0d0d4; }
+
+  .supl-hist-row {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .supl-hist-date { font-size: 12px; color: var(--muted); }
+  .supl-hist-pills {
+    display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; max-width: 65%;
+  }
+  .supl-pill-chip {
+    font-size: 10px; padding: 2px 7px; border-radius: 8px;
+    background: var(--rosa-light); color: var(--vino); font-weight: 500;
+  }
+  .supl-pill-chip.missed {
+    background: #f5f0f0; color: var(--muted);
+    text-decoration: line-through;
+  }
+
+  /* ── CREATINA HIGHLIGHT ── */
+  .supl-slot.highlight-supl {
+    border-color: #f0a030 !important;
+    background: #fffbf0 !important;
+  }
+  .supl-slot.highlight-supl .supl-timing {
+    background: #fef3d0; color: #a06010; font-weight: 600;
+  }
+
+  /* ── WATER TRACKER ── */
+  .water-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 4px;
+    border-top: 3px solid #4a9edd;
+  }
+  .water-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .water-amount {
+    font-family: var(--font-title);
+    font-size: 36px; font-weight: 600; color: #2a6ea6; line-height: 1;
+  }
+  .water-goal { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .water-bar-wrap { flex: 1; }
+  .water-bar-bg {
+    height: 10px; background: #e8f4fd; border-radius: 5px; overflow: hidden; margin-bottom: 4px;
+  }
+  .water-bar-fill {
+    height: 100%; background: linear-gradient(90deg, #4a9edd, #2a6ea6);
+    border-radius: 5px; transition: width 0.4s ease; width: 0%;
+  }
+  .water-pct { font-size: 11px; color: #4a9edd; font-weight: 600; text-align: right; }
+  .water-glasses {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; min-height: 28px;
+  }
+  .water-glass {
+    width: 28px; height: 28px;
+    background: #e8f4fd; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: all 0.2s;
+  }
+  .water-glass.filled { background: #4a9edd; }
+  .water-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .water-btn {
+    flex: 1; min-width: 60px;
+    background: #e8f4fd; border: none; border-radius: 10px;
+    padding: 8px 4px; font-family: var(--font-body);
+    font-size: 12px; font-weight: 500; color: #2a6ea6;
+    cursor: pointer; text-align: center; line-height: 1.3;
+    transition: all 0.15s;
+  }
+  .water-btn span { font-size: 10px; color: #4a9edd; display: block; }
+  .water-btn:active { background: #4a9edd; color: white; }
+  .water-btn.photo { background: var(--rosa-light); color: var(--vino); }
+  .water-btn.photo span { color: var(--rosa); }
+  /* ── DRINK ROWS — slider style ── */
+  .drink-row {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 12px 14px 14px;
+    margin-bottom: 8px;
+    border-left: 3px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .drink-row.has-drinks { border-left-color: var(--rosa); }
+  .drink-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .drink-icon { font-size: 20px; flex-shrink: 0; }
+  .drink-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--vino); }
+  .drink-ml-input {
+    width: 62px; border: 1.5px solid #e8d8de; border-radius: 8px;
+    padding: 4px 6px; font-family: var(--font-body); font-size: 14px;
+    font-weight: 600; color: var(--granate); background: var(--cream);
+    text-align: center; outline: none;
+  }
+  .drink-ml-input:focus { border-color: var(--rosa); }
+  .drink-unit { font-size: 11px; color: var(--muted); }
+  .drink-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 2px;
+    outline: none; background: #e8d8de; cursor: pointer;
+  }
+  .drink-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--granate); cursor: pointer;
+    box-shadow: 0 1px 4px rgba(168,5,23,0.3);
+    transition: transform 0.1s;
+  }
+  .drink-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+  .drink-note { font-size: 10px; color: var(--muted); margin-top: 5px; }
+  .drink-note.warn { color: #c05000; }
+  .drinks-save-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 14px;
+    background: var(--granate); color: white;
+    font-family: var(--font-body); font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 4px; letter-spacing: 0.3px;
+    transition: background 0.15s;
+  }
+  .drinks-save-btn:active { background: var(--vino); }
+
+  /* ── DRINK LOG ENTRIES ── */
+  .drink-log-entry {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .drink-log-time {
+    font-size: 11px; color: var(--muted);
+    min-width: 36px; padding-top: 2px; flex-shrink: 0;
+  }
+  .drink-log-items { flex: 1; }
+  .drink-log-item {
+    font-size: 13px; color: var(--vino);
+    line-height: 1.8;
+  }
+  .drink-log-item span { color: var(--muted); font-size: 12px; }
+  .drink-log-total {
+    font-size: 11px; color: var(--granate);
+    font-weight: 600; margin-top: 2px;
+  }
+  .drink-log-undo {
+    background: none; border: 1px solid #e8d8de;
+    border-radius: 8px; padding: 4px 10px;
+    font-size: 12px; color: var(--muted);
+    cursor: pointer; flex-shrink: 0; margin-top: 1px;
+    transition: all 0.15s;
+  }
+  .drink-log-undo:active { background: #f5e8ea; color: var(--granate); border-color: var(--rosa); }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="position:fixed;inset:0;background:var(--cream);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+  <div style="font-family:var(--font-title);font-size:28px;color:var(--granate);font-weight:600;">PáPRIKA</div>
+  <div class="dots"><span></span><span></span><span></span></div>
+  <div style="font-size:12px;color:var(--muted);">Cargando tus datos…</div>
+</div>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-top">
+    <div class="brand">EEGs tracker</div>
+    <div class="day-badge" id="dayBadge">DÍA 1 / 60</div>
+  </div>
+  <nav class="nav-tabs">
+    <div class="nav-tab active" onclick="showScreen('registro')">
+      <span class="tab-icon">✦</span>Registrar
+    </div>
+    <div class="nav-tab" onclick="showScreen('seguimiento')">
+      <span class="tab-icon">◎</span>Progreso
+    </div>
+    <div class="nav-tab" onclick="showScreen('patrones')">
+      <span class="tab-icon">◈</span>Patrones
+    </div>
+    <div class="nav-tab" onclick="showScreen('zepp')">
+      <span class="tab-icon">⌁</span>Zepp
+    </div>
+    <div class="nav-tab" onclick="showScreen('suplementos')">
+      <span class="tab-icon">💧</span>Agua
+    </div>
+  </nav>
+</header>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: REGISTRAR                      -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen active" id="screen-registro">
+
+  <div class="registro-hero">
+    <div class="time-greeting" id="greeting">Buenas tardes</div>
+    <div class="time-sub" id="timeDisplay">Cargando hora...</div>
+    <div class="kitchen-alert" id="kitchenAlert">
+      <span>🕐</span>
+      <span id="kitchenMsg">La cocina cierra a las 21h</span>
+    </div>
+  </div>
+
+  <div class="meals-section">
+    <div class="section-title">Comidas de hoy</div>
+    <div id="mealSlots"></div>
+  </div>
+
+  <!-- CUIDADOS -->
+  <div style="padding: 0 20px 4px;">
+    <div class="section-title">Cuidados</div>
+    <div id="cuidadosList"></div>
+    <!-- Formulario para añadir cuidado -->
+    <div class="cuidado-add-form" id="cuidadoForm">
+      <div class="cuidado-tipos" id="cuidadoTipos"></div>
+      <input type="text" id="cuidadoCustom" class="cuidado-input" placeholder="O escribe el tuyo: crioterapia, baño de sales…">
+      <input type="date" id="cuidadoFecha" class="cuidado-input" style="width:auto">
+      <input type="text" id="cuidadoNotas" class="cuidado-input" placeholder="Notas (opcional)">
+      <button class="cuidado-save-btn" onclick="saveCuidado()">Añadir cuidado ✦</button>
+    </div>
+  </div>
+
+  <div class="ia-section">
+    <div class="ia-card">
+      <div class="ia-card-header">
+        <div class="ia-avatar">🌿</div>
+        <div>
+          <div class="ia-title">Pregúntame cualquier cosa</div>
+          <div class="ia-subtitle">Qué comer, si algo es bueno, qué pedir en el restaurante…</div>
+        </div>
+      </div>
+      <div class="quick-prompts">
+        <div class="qp" onclick="quickPrompt('¿Qué puedo cenar esta noche?')">¿Qué ceno?</div>
+        <div class="qp" onclick="quickPrompt('Voy a un restaurante, ¿qué pido?')">En restaurante</div>
+        <div class="qp" onclick="quickPrompt('Tengo antojos de algo dulce, ¿qué hago?')">Antojo dulce</div>
+        <div class="qp" onclick="quickPrompt('¿Cómo voy hoy según el plan?')">¿Cómo voy?</div>
+        <div class="qp" onclick="quickPrompt('Me salté el desayuno, ¿qué hago ahora?')">Me salté algo</div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg ai">Hola 👋 Hoy es tu <strong>día 1</strong>. Estoy aquí para ayudarte a tomar buenas decisiones en tiempo real. ¿En qué puedo ayudarte?</div>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chatInput" placeholder="Escribe aquí..." rows="1"
+          oninput="autoResize(this)" onkeydown="handleEnter(event)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: SEGUIMIENTO                    -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-seguimiento">
+  <div class="seguimiento-header">
+    <div class="prog-title">Tu progreso</div>
+    <div class="prog-sub" id="progSubtitle">60 días · Comenzaste hoy</div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 100 100">
+        <circle class="ring-bg" cx="50" cy="50" r="38"/>
+        <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="38"
+          stroke-dasharray="238.76"
+          stroke-dashoffset="238.76"/>
+        <text class="ring-center">
+          <tspan class="ring-day" id="ringDay" x="50" y="46">1</tspan>
+          <tspan class="ring-label" x="50" y="60">de 60</tspan>
+        </text>
+      </svg>
+      <div class="ring-info">
+        <div class="ring-info-title" id="ringTitle">¡Primer día!</div>
+        <div class="ring-info-sub" id="ringInfo">Cada día que registras suma. El cuerpo tarda 3–4 días en empezar a responder. Confía en el proceso.</div>
+      </div>
+    </div>
+
+    <div class="score-grid">
+      <div class="score-card">
+        <div class="score-val good" id="scoreHoy">—</div>
+        <div class="score-label">Score<br>de hoy</div>
+      </div>
+      <div class="score-card">
+        <div class="score-val neutral" id="scoreMedia">—</div>
+        <div class="score-label">Media<br>semanal</div>
+      </div>
+      <div class="score-card">
+        <div class="score-val neutral" id="racha">0</div>
+        <div class="score-label">Días<br>consecutivos</div>
+      </div>
+      <div class="score-card">
+        <div class="score-val neutral" id="cocinas">—</div>
+        <div class="score-label">Cocinas<br>cerradas a tiempo</div>
+      </div>
+      <div class="score-card">
+        <div class="score-val neutral" id="masajesTotal">0</div>
+        <div class="score-label">Cuidados<br>esta semana</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="log-section">
+    <div class="section-title" style="padding: 0 0 4px;">Historial</div>
+    <div id="historialContainer">
+      <div style="text-align:center; padding: 30px 20px; color: var(--muted); font-size: 13px;">
+        Aún no hay registros.<br>Empieza registrando tu primera comida.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: PATRONES                       -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-patrones">
+  <div class="patrones-header">
+    <div class="prog-title">Tus 5 patrones</div>
+    <div class="prog-sub">Los hábitos que tienes que automatizar</div>
+  </div>
+  <div class="patrones-content" id="patronesContent"></div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: ZEPP                           -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-zepp">
+  <div class="patrones-header">
+    <div class="prog-title">Actividad Zepp</div>
+    <div class="prog-sub">Importa tu CSV de Zepp para cruzar ejercicio y nutrición</div>
+  </div>
+
+  <!-- HOW TO EXPORT -->
+  <div style="padding: 0 20px 4px;">
+    <div class="zepp-steps-card">
+      <div class="zepp-steps-title">¿Cómo exportar desde Zepp?</div>
+      <div class="zepp-step"><span class="zepp-step-num">1</span><span>Abre la app Zepp en tu móvil</span></div>
+      <div class="zepp-step"><span class="zepp-step-num">2</span><span>Perfil → Ajustes → Exportar datos de salud</span></div>
+      <div class="zepp-step"><span class="zepp-step-num">3</span><span>Selecciona el rango de los últimos 60 días</span></div>
+      <div class="zepp-step"><span class="zepp-step-num">4</span><span>Descarga el ZIP, extrae el CSV de actividad</span></div>
+      <div class="zepp-step"><span class="zepp-step-num">5</span><span>Súbelo aquí con el botón de abajo</span></div>
+    </div>
+  </div>
+
+  <!-- UPLOAD ZONE -->
+  <div style="padding: 14px 20px 0;">
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('csvInput').click()">
+      <div class="upload-icon">⌁</div>
+      <div class="upload-title">Toca para subir tu CSV</div>
+      <div class="upload-sub">Archivos: SPORT_DATA.csv, activity.csv o similar</div>
+      <input type="file" id="csvInput" accept=".csv,.txt" style="display:none" onchange="handleCSV(event)">
+    </div>
+  </div>
+
+  <!-- MANUAL ENTRY fallback -->
+  <div style="padding: 14px 20px 0;">
+    <div style="font-size: 11px; color: var(--muted); text-align:center; margin-bottom: 10px; letter-spacing: 0.5px;">O introduce los datos de hoy manualmente</div>
+    <div class="manual-grid">
+      <div class="manual-field">
+        <label class="manual-label">Pasos</label>
+        <input type="number" class="manual-input" id="manPasos" placeholder="8500">
+      </div>
+      <div class="manual-field">
+        <label class="manual-label">Min. activos</label>
+        <input type="number" class="manual-input" id="manMinutos" placeholder="65">
+      </div>
+      <div class="manual-field">
+        <label class="manual-label">Kcal quemadas</label>
+        <input type="number" class="manual-input" id="manKcal" placeholder="420">
+      </div>
+      <div class="manual-field">
+        <label class="manual-label">Sueño (h)</label>
+        <input type="number" class="manual-input" id="manSueno" placeholder="7.5" step="0.5">
+      </div>
+    </div>
+    <button class="btn-primary" style="margin-top:12px" onclick="saveManualActivity()">Guardar actividad de hoy</button>
+  </div>
+
+  <!-- ANALYSIS RESULT -->
+  <div id="zeppAnalysis" style="padding: 14px 20px 20px; display:none;">
+    <div class="section-title">Análisis cruzado</div>
+    <div class="zepp-analysis-card" id="zeppAnalysisContent"></div>
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div style="padding: 0 20px 20px;" id="activityLogSection">
+    <div class="section-title" style="padding-bottom: 10px;">Historial de actividad</div>
+    <div id="activityLog">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Aún no hay datos de actividad.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SCREEN: AGUA                           -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-suplementos">
+  <div class="patrones-header">
+    <div class="prog-title">Bebidas</div>
+    <div class="prog-sub">Toca + para sumar cada vez que bebes</div>
+  </div>
+
+  <!-- TOTAL + BARRA -->
+  <div style="padding: 16px 20px 0;">
+    <div class="water-card">
+      <div style="text-align:center; padding: 6px 0 14px;">
+        <div style="font-family:var(--font-title);font-size:48px;font-weight:600;color:#2a6ea6;line-height:1" id="waterAmount">0 ml</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">de <strong style="color:#2a6ea6">2.500 ml</strong> · meta diaria de hidratación</div>
+      </div>
+      <div class="water-bar-bg" style="margin-bottom:6px">
+        <div class="water-bar-fill" id="waterBarFill"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">
+        <span id="waterPct">0%</span>
+        <span id="waterRemaining">2.500 ml restantes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRINK TYPES -->
+  <div style="padding: 12px 20px 0;">
+    <div id="drinkList"></div>
+    <button class="drinks-save-btn" onclick="saveDrinks()">Añadir al registro del día ✦</button>
+  </div>
+
+  <!-- REGISTRO DE HOY -->
+  <div style="padding: 14px 20px 0;" id="drinkLogSection">
+    <div class="section-title" style="margin-bottom:8px">Registros de hoy</div>
+    <div id="drinkLog">
+      <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Aún no has añadido nada hoy.</div>
+    </div>
+  </div>
+
+  <!-- SUPLEMENTOS RESUMEN -->
+  <div style="padding: 16px 20px 0;">
+    <div class="section-title">Suplementos hoy</div>
+    <div id="suplResumen" style="background:var(--white);border-radius:14px;padding:14px 16px;margin-top:8px;">
+      <div style="text-align:center;color:var(--muted);font-size:13px;">Registra tus comidas para ver los suplementos tomados.</div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div style="padding: 16px 20px 24px;">
+    <div class="section-title" style="margin-bottom:10px">Esta semana</div>
+    <div id="waterHistorial">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Aún no hay registros.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- MODAL: REGISTRAR COMIDA               -->
+<!-- ══════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Desayuno</div>
+    <div class="modal-sub" id="modalSub">¿Qué has comido?</div>
+
+    <!-- PHOTO UPLOAD -->
+    <div class="photo-row">
+      <div class="photo-zone" id="photoZone" onclick="document.getElementById('photoInput').click()">
+        <span id="photoZoneIcon">📷</span>
+        <span id="photoZoneText">Foto del plato</span>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+      </div>
+      <img id="photoPreview" class="photo-preview" style="display:none">
+      <button id="photoRemove" class="photo-remove" style="display:none" onclick="removePhoto()">✕</button>
+    </div>
+
+    <textarea class="food-textarea" id="foodInput"
+      placeholder="Describe lo que has comido… o sube una foto y lo analizo yo"></textarea>
+
+    <div style="margin-top: 12px;">
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">¿Ha habido alcohol?</div>
+      <div class="modal-options">
+        <div class="opt-chip" id="alc-no" onclick="selectAlcohol('no')">No</div>
+        <div class="opt-chip sel" id="alc-copa" onclick="selectAlcohol('copa')">1 copa de vino</div>
+        <div class="opt-chip" id="alc-mas" onclick="selectAlcohol('mas')">Más de una copa</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">¿A qué hora aprox.?</div>
+      <input type="time" id="mealTimeInput" style="border: 1.5px solid #e8d8de; border-radius: 10px; padding: 10px 14px; font-family: var(--font-body); font-size: 14px; color: var(--text); background: var(--cream); outline: none; width: 140px;">
+    </div>
+
+    <!-- SUPLEMENTOS DEL MOMENTO -->
+    <div id="modalSuplSection" style="margin-top: 14px; display:none;">
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">¿Te los tomas ahora?</div>
+      <div id="modalSuplList" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+
+    <div class="ai-feedback" id="aiFeedback">
+      <div class="ai-feedback-label">Análisis</div>
+      <div id="aiFeedbackText"></div>
+      <div class="score-stars" id="aiFeedbackStars"></div>
+    </div>
+
+    <button class="btn-primary" id="analyzeBtn" onclick="analyzeMeal()">Analizar y registrar ✦</button>
+    <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA & STATE  — Cloud-persistent storage
+// ══════════════════════════════════════════════
+
+// In-memory cache to avoid excessive async calls
+const _cache = { data: null, activity: null, masajes: null, start: null, suplementos: null };
+
+const START_DATE = (() => {
+  // Bootstrap from cache or set today — async init will update
+  const local = localStorage.getItem('paprika_start_bak');
+  if (local) return new Date(local);
+  const d = new Date(); d.setHours(0,0,0,0);
+  return d;
+})();
+
+// ── Cloud storage helpers ──
+async function cloudGet(key) {
+  try {
+    const r = await window.storage.get(key);
+    return r ? JSON.parse(r.value) : null;
+  } catch { return null; }
+}
+async function cloudSet(key, value) {
+  try { await window.storage.set(key, JSON.stringify(value)); } catch(e) { console.warn('cloudSet failed', e); }
+}
+
+// ── Nutrition data ──
+async function getStorageAsync() {
+  if (_cache.data !== null) return _cache.data;
+  const val = await cloudGet('paprika-data');
+  _cache.data = val || {};
+  return _cache.data;
+}
+function getStorage() { return _cache.data || {}; }
+async function saveStorage(data) {
+  _cache.data = data;
+  await cloudSet('paprika-data', data);
+  // Also keep lightweight localStorage backup of today only
+  try { localStorage.setItem('paprika_data_bak', JSON.stringify(data)); } catch {}
+}
+
+// ── Activity data ──
+async function getActivityStorageAsync() {
+  if (_cache.activity !== null) return _cache.activity;
+  const val = await cloudGet('paprika-activity');
+  _cache.activity = val || {};
+  return _cache.activity;
+}
+function getActivityStorage() { return _cache.activity || {}; }
+async function saveActivityStorage(data) {
+  _cache.activity = data;
+  await cloudSet('paprika-activity', data);
+}
+
+// ── Masaje data ──
+async function getMasajeStorageAsync() {
+  if (_cache.masajes !== null) return _cache.masajes;
+  const val = await cloudGet('paprika-masajes');
+  _cache.masajes = val || [];
+  return _cache.masajes;
+}
+function getMasajeStorage() { return _cache.masajes || []; }
+async function saveMasajeStorage(arr) {
+  _cache.masajes = arr;
+  await cloudSet('paprika-masajes', arr);
+}
+
+// ── Suplementos data ──
+async function getSuplStorageAsync() {
+  if (_cache.suplementos !== null) return _cache.suplementos;
+  const val = await cloudGet('paprika-suplementos');
+  _cache.suplementos = val || {};
+  return _cache.suplementos;
+}
+function getSuplStorage() { return _cache.suplementos || {}; }
+async function saveSuplStorage(data) {
+  _cache.suplementos = data;
+  await cloudSet('paprika-suplementos', data);
+}
+async function initStartDate() {
+  let stored = await cloudGet('paprika-start');
+  if (!stored) {
+    const d = new Date(); d.setHours(0,0,0,0);
+    stored = d.toISOString();
+    await cloudSet('paprika-start', stored);
+  }
+  // Patch START_DATE reference used across app
+  const d = new Date(stored);
+  Object.defineProperty(window, 'START_DATE_CLOUD', { value: d, writable: true });
+  try { localStorage.setItem('paprika_start_bak', stored); } catch {}
+  return d;
+}
+
+function getTodayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ── App Init — load all cloud data then render ──
+async function initApp() {
+  showLoadingState(true);
+  try {
+    // Load all stores in parallel
+    const [data, activity, masajes, suplementos] = await Promise.all([
+      cloudGet('paprika-data'),
+      cloudGet('paprika-activity'),
+      cloudGet('paprika-masajes'),
+      cloudGet('paprika-suplementos'),
+    ]);
+    _cache.data        = data        || {};
+    _cache.activity    = activity    || {};
+    _cache.masajes     = masajes     || [];
+    _cache.suplementos = suplementos || {};
+    await initStartDate();
+  } catch(e) {
+    // Fallback: try localStorage backup
+    try {
+      _cache.data = JSON.parse(localStorage.getItem('paprika_data_bak') || '{}');
+    } catch { _cache.data = {}; }
+    _cache.activity = {};
+    _cache.masajes  = [];
+    console.warn('Cloud storage unavailable, using local fallback', e);
+  }
+  showLoadingState(false);
+
+  // Sync suplChecked from today's supl screen + meal logs
+  const todaySupls = (_cache.suplementos || {})[getTodayKey()] || {};
+  suplChecked = new Set(Object.keys(todaySupls).filter(k => todaySupls[k]));
+  // Also pull from any meals logged today
+  const todayMeals = (_cache.data || {})[getTodayKey()] || {};
+  MEALS.forEach(m => { (todayMeals[m.id]?.supls || []).forEach(id => suplChecked.add(id)); });
+
+  renderMealSlots();
+  updateScores();
+  initCuidados();
+  loadDrinkToday().catch(() => {});
+}
+
+function showLoadingState(loading) {
+  const el = document.getElementById('loadingOverlay');
+  if (el) el.style.display = loading ? 'flex' : 'none';
+}
+
+function getDayNumber() {
+  const ref = window.START_DATE_CLOUD || START_DATE;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.floor((today - ref) / 86400000) + 1;
+  return Math.max(diff, 1);
+}
+function isInReto() { return getDayNumber() <= 60; }
+
+const MEALS = [
+  { id: 'desayuno', name: 'Desayuno', time: '10:00', hint: 'Proteína + grasa buena + fibra. Sin azúcar libre.' },
+  { id: 'comida', name: 'Comida', time: '13:30', hint: 'Tu comida principal. La más libre del día.' },
+  { id: 'merienda', name: 'Merienda', time: '17:00', hint: 'Solo si hay hambre real. Proteína o fruta.' },
+  { id: 'cena', name: 'Cena', time: '20:30', hint: 'Ligera. Verdura + proteína. Sin hidratos.' },
+];
+
+const PATRONES = [
+  { icon: '🕘', title: 'La cocina cierra a las 21h', desc: 'Es el cambio con mayor retorno. Sin negociación. Nada sólido después de las 21h, solo infusiones o agua.', key: 'cocina' },
+  { icon: '🥚', title: 'Proteína en cada ingesta', desc: 'Huevo, yogur griego, pescado, pollo, legumbres. Siempre algo proteico en el plato para saciar y preservar músculo.', key: 'proteina' },
+  { icon: '🌾', title: 'Hidratos en la primera mitad del día', desc: 'Avena, pan, arroz, boniato: antes de las 16h. En la cena solo verdura. Reduce la hinchazón nocturna en 48h.', key: 'hidratos' },
+  { icon: '💧', title: '2 litros de agua al día', desc: 'La retención se combate bebiendo más, no menos. El cuerpo retiene cuando no le llega suficiente hidratación.', key: 'agua' },
+  { icon: '🍵', title: 'Infusión depurativa antes de dormir', desc: 'Diente de león, cola de caballo o hinojo. 3 veces/semana mínimo. Apoyan al hígado y reducen retención.', key: 'infusion' },
+];
+
+const SUPLEMENTOS = [
+  { id: 'colageno',  name: 'Colágeno',       icon: '🫧', desc: 'En ayunas + vitamina C. Lejos de proteína.', timing: 'En ayunas — antes del desayuno', meals: ['desayuno'], preBreakfast: true },
+  { id: 'k2',        name: 'Vitamina K2',    icon: '🦴', desc: 'Con grasa — solo en comida.', timing: 'Con comida (con grasa)',  meals: ['comida'] },
+  { id: 'folico',    name: 'Ácido fólico',   icon: '🌿', desc: 'Síntesis celular.', timing: 'Con desayuno',           meals: ['desayuno','comida'] },
+  { id: 'omega3',    name: 'Omega 3',        icon: '🐟', desc: 'Antiinflamatorio. 1.000–2.000mg EPA+DHA.', timing: 'Con comida',             meals: ['comida','desayuno'] },
+  { id: 'magnesio',  name: 'Magnesio',       icon: '🌙', desc: 'Sueño y cortisol. Bisglicinato 300–400mg.', timing: 'Con cena',              meals: ['cena'] },
+];
+
+// Returns suplementos pending (not yet taken today) that match this meal
+function getSuplForMeal(mealId) {
+  const taken = getTakenSuplToday();
+  return SUPLEMENTOS.filter(s => s.meals.includes(mealId) && !taken.has(s.id));
+}
+
+// Returns Set of supl ids already taken today (from any meal log or supl screen)
+function getTakenSuplToday() {
+  const taken = new Set();
+  // From supl screen
+  if (suplChecked) suplChecked.forEach(id => taken.add(id));
+  // From meal logs
+  const data = getStorage();
+  const todayData = data[getTodayKey()] || {};
+  MEALS.forEach(m => {
+    const log = todayData[m.id];
+    if (log?.supls) log.supls.forEach(id => taken.add(id));
+  });
+  return taken;
+}
+
+let currentMealId = null;
+let alcoholChoice = 'no';
+let chatHistory = [];
+let currentPhotoBase64 = null;
+let currentPhotoType = 'image/jpeg';
+let modalSuplSelected = new Set(); // suplementos checked in current modal
+
+function renderModalSupls(mealId) {
+  const pending = getSuplForMeal(mealId);
+  const section = document.getElementById('modalSuplSection');
+  const list    = document.getElementById('modalSuplList');
+  modalSuplSelected = new Set();
+
+  if (!pending.length) { section.style.display = 'none'; return; }
+
+  section.style.display = 'block';
+  list.innerHTML = '';
+
+  pending.forEach(s => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;background:var(--cream);border-radius:10px;padding:9px 12px;cursor:pointer;border:1.5px solid transparent;transition:all 0.15s;';
+    row.id = `ms-${s.id}`;
+    row.innerHTML = `
+      <span style="font-size:18px">${s.icon}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:var(--vino)">${s.name}${s.highlight ? ' <span style="font-size:10px;color:#a06010">★</span>' : ''}</div>
+        <div style="font-size:11px;color:var(--muted)">${s.desc}</div>
+      </div>
+      <div class="supl-check" id="ms-check-${s.id}" style="opacity:0">✓</div>
+    `;
+    row.onclick = () => toggleModalSupl(s.id);
+    list.appendChild(row);
+  });
+}
+
+function toggleModalSupl(id) {
+  const row = document.getElementById(`ms-${id}`);
+  const check = document.getElementById(`ms-check-${id}`);
+  if (modalSuplSelected.has(id)) {
+    modalSuplSelected.delete(id);
+    row.style.borderColor = 'transparent';
+    row.style.background = 'var(--cream)';
+    check.style.opacity = '0';
+  } else {
+    modalSuplSelected.add(id);
+    row.style.borderColor = 'var(--rosa)';
+    row.style.background = 'var(--rosa-light)';
+    check.style.opacity = '1';
+  }
+}
+
+// ══════════════════════════════════════════════
+// CLOCK & GREETING
+// ══════════════════════════════════════════════
+
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const day = getDayNumber();
+
+  const badgeDay = getDayNumber();
+  document.getElementById('dayBadge').textContent = isInReto()
+    ? (badgeDay <= 14 ? `DÍA ${badgeDay} / 60 · 🎯14` : `DÍA ${badgeDay} / 60`)
+    : `DÍA ${badgeDay}`;
+  document.getElementById('ringDay').textContent = isInReto() ? day : '✦';
+  document.getElementById('timeDisplay').textContent = `${timeStr} · ${['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][now.getDay()]} ${now.getDate()} de ${['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][now.getMonth()]}`;
+
+  const greetings = [[6,'Buenos días ☀️'],[13,'Buenos días ☀️'],[14,'Buenas tardes'],[21,'Buenas noches']];
+  let greeting = 'Hola';
+  for (const [cutoff, text] of greetings) { if (h >= cutoff) greeting = text; }
+  document.getElementById('greeting').textContent = greeting;
+
+  // Kitchen alert
+  const alert = document.getElementById('kitchenAlert');
+  const msg = document.getElementById('kitchenMsg');
+  const total = h * 60 + m;
+  if (total < 20 * 60) {
+    alert.className = 'kitchen-alert';
+    const mins = (20 * 60 + 30) - total;
+    msg.textContent = `La cocina cierra en ${Math.floor(mins/60)}h ${mins%60}min (21h)`;
+  } else if (total < 21 * 60) {
+    alert.className = 'kitchen-alert warning';
+    msg.textContent = `⚠️ Quedan ${21*60 - total} min para cerrar la cocina`;
+  } else {
+    alert.className = 'kitchen-alert danger';
+    msg.textContent = `🚫 Cocina cerrada. Solo infusiones o agua`;
+  }
+
+  updateRing();
+}
+
+function updateRing() {
+  const day = getDayNumber();
+  const circumference = 238.76;
+  const offset = isInReto() ? circumference * (1 - day / 60) : 0;
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+
+  const titles = {
+    1:  ['¡Primer día!',        'Cada día que registras suma. El cuerpo tarda 3–4 días en empezar a responder.'],
+    3:  ['¡Vas bien!',          'En estos primeros días el cuerpo empieza a desinflamarse. Notarás la ropa más cómoda pronto.'],
+    7:  ['¡Una semana!',        'Si has aplicado los patrones, ya deberías notar menos hinchazón y más energía.'],
+    14: ['🎯 ¡Hito de 14 días!','Primera meta conseguida. El cuerpo ha respondido — ahora toca consolidar para los 60 días.'],
+    30: ['¡Un mes!',            'Llevas 30 días. Los hábitos ya son tuyos. La segunda mitad es donde se notan los cambios reales.'],
+    60: ['🏆 ¡60 días!',        '60 días completados. Has construido una rutina real. Esto ya es un estilo de vida.'],
+  };
+  if (!isInReto()) {
+    document.getElementById('ringTitle').textContent = `Día ${day}`;
+    document.getElementById('ringInfo').textContent = 'Los 60 días están completados. Ahora estás en modo mantenimiento y mejora continua.';
+    document.getElementById('progSubtitle').textContent = `Modo continuo · Día ${day}`;
+  } else {
+    const closest = [60,30,14,7,3,1].find(k => day >= k);
+    const [title, info] = titles[closest] || titles[1];
+    document.getElementById('ringTitle').textContent = title;
+    document.getElementById('ringInfo').textContent = info;
+    // Mostrar en qué fase estamos
+    const fase = day <= 14 ? `Fase 1 · Día ${day} de 14` : day <= 30 ? `Fase 2 · Día ${day} de 30` : `Fase 3 · Día ${day} de 60`;
+    document.getElementById('progSubtitle').textContent = `60 días · ${fase}`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// MEAL SLOTS
+// ══════════════════════════════════════════════
+
+function renderMealSlots() {
+  const data = getStorage();
+  const todayKey = getTodayKey();
+  const todayData = data[todayKey] || {};
+  const now = new Date();
+  const currentHour = now.getHours() + now.getMinutes() / 60;
+
+  const container = document.getElementById('mealSlots');
+  container.innerHTML = '';
+
+  MEALS.forEach(meal => {
+    const logged = todayData[meal.id];
+    const mealHour = parseInt(meal.time.split(':')[0]) + parseInt(meal.time.split(':')[1]) / 60;
+    const isCurrent = Math.abs(mealHour - currentHour) < 2 && !logged;
+
+    // Show pending supls badge for this meal
+    const takenToday = getTakenSuplToday();
+    const pendingSupls = SUPLEMENTOS.filter(s => s.meals?.includes(meal.id) && !takenToday.has(s.id));
+    const suplBadge = pendingSupls.length && !logged
+      ? ` <span style="font-size:10px;background:#fef3d0;color:#a06010;padding:1px 6px;border-radius:8px;font-weight:600;">${pendingSupls.map(s=>s.icon).join('')} pastillas</span>`
+      : '';
+
+    const div = document.createElement('div');
+    div.className = `meal-slot${logged ? ' logged' : ''}${isCurrent ? ' current' : ''}`;
+    div.onclick = () => openModal(meal.id);
+    div.innerHTML = `
+      <div class="meal-time">${meal.time}</div>
+      <div class="meal-info">
+        <div class="meal-name">${meal.name}${suplBadge}</div>
+        <div class="meal-desc">${logged ? logged.summary || meal.hint : meal.hint}</div>
+      </div>
+      <div class="meal-check">${logged ? '✓' : isCurrent ? '＋' : ''}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════════
+// PHOTO HANDLING
+// ══════════════════════════════════════════════
+
+function handlePhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  currentPhotoType = file.type || 'image/jpeg';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const full = e.target.result; // data:image/jpeg;base64,XXXX
+    currentPhotoBase64 = full.split(',')[1];
+
+    const preview = document.getElementById('photoPreview');
+    const remove  = document.getElementById('photoRemove');
+    const zone    = document.getElementById('photoZone');
+    preview.src = full;
+    preview.style.display = 'block';
+    remove.style.display  = 'flex';
+    zone.classList.add('has-photo');
+    document.getElementById('photoZoneIcon').textContent = '✓';
+    document.getElementById('photoZoneText').textContent = 'Foto lista';
+
+    // Clear text area hint
+    document.getElementById('foodInput').placeholder = 'Añade notas si quieres (opcional, la IA ya analizará la foto)';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  currentPhotoBase64 = null;
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoRemove').style.display  = 'none';
+  const zone = document.getElementById('photoZone');
+  zone.classList.remove('has-photo');
+  document.getElementById('photoZoneIcon').textContent = '📷';
+  document.getElementById('photoZoneText').textContent = 'Foto del plato';
+  document.getElementById('photoInput').value = '';
+  document.getElementById('foodInput').placeholder = 'Describe lo que has comido… o sube una foto y lo analizo yo';
+}
+
+// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// CUIDADOS
+// ══════════════════════════════════════════════
+
+const CUIDADO_TIPOS = [
+  { id: 'masaje',     icon: '💆', label: 'Masaje drenante' },
+  { id: 'sauna',      icon: '🧖', label: 'Sauna' },
+  { id: 'stretching', icon: '🤸', label: 'Stretching' },
+  { id: 'bano',       icon: '🛁', label: 'Baño de sales' },
+  { id: 'crioterapia',icon: '🧊', label: 'Crioterapia' },
+  { id: 'acupuntura', icon: '📍', label: 'Acupuntura' },
+  { id: 'otro',       icon: '✦',  label: 'Otro' },
+];
+
+let _selectedCuidadoTipo = null;
+
+function renderCuidadoTipos() {
+  const container = document.getElementById('cuidadoTipos');
+  if (!container) return;
+  container.innerHTML = CUIDADO_TIPOS.map(t => `
+    <button class="cuidado-tipo-btn${_selectedCuidadoTipo === t.id ? ' selected' : ''}"
+      onclick="selectCuidadoTipo('${t.id}')">
+      ${t.icon} ${t.label}
+    </button>`).join('');
+}
+
+function selectCuidadoTipo(id) {
+  _selectedCuidadoTipo = _selectedCuidadoTipo === id ? null : id;
+  renderCuidadoTipos();
+  // Si no es "otro", limpiar el campo custom
+  if (id !== 'otro') document.getElementById('cuidadoCustom').value = '';
+}
+
+async function saveCuidado() {
+  const custom = document.getElementById('cuidadoCustom').value.trim();
+  const fecha  = document.getElementById('cuidadoFecha').value || getTodayKey();
+  const notas  = document.getElementById('cuidadoNotas').value.trim();
+
+  // Nombre del cuidado
+  let nombre, icon;
+  if (custom) {
+    nombre = custom; icon = '✦';
+  } else if (_selectedCuidadoTipo) {
+    const t = CUIDADO_TIPOS.find(x => x.id === _selectedCuidadoTipo);
+    nombre = t.label; icon = t.icon;
+  } else {
+    // Nada seleccionado
+    document.getElementById('cuidadoCustom').focus();
+    return;
+  }
+
+  const arr = getMasajeStorage();
+  arr.push({ id: Date.now(), nombre, icon, fecha, notas });
+  await saveMasajeStorage(arr);
+
+  // Reset form
+  _selectedCuidadoTipo = null;
+  document.getElementById('cuidadoCustom').value = '';
+  document.getElementById('cuidadoFecha').value  = getTodayKey();
+  document.getElementById('cuidadoNotas').value  = '';
+  renderCuidadoTipos();
+  renderCuidadosList();
+
+  // Feedback
+  const btn = document.querySelector('.cuidado-save-btn');
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Añadido';
+    btn.style.background = '#2e7d32';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1500);
+  }
+}
+
+async function deleteCuidado(id) {
+  const arr = getMasajeStorage().filter(x => x.id !== id);
+  await saveMasajeStorage(arr);
+  renderCuidadosList();
+}
+
+function renderCuidadosList() {
+  const container = document.getElementById('cuidadosList');
+  if (!container) return;
+  const arr = getMasajeStorage();
+  // Mostrar los últimos 7 días
+  const cutoff = new Date(Date.now() - 7 * 86400000);
+  const recent = arr.filter(x => new Date(x.fecha + 'T12:00:00') >= cutoff)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+  if (!recent.length) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:4px 0 8px;">Nada registrado esta semana.</div>';
+    return;
+  }
+  container.innerHTML = recent.map(x => {
+    const d = new Date(x.fecha + 'T12:00:00');
+    const label = x.fecha === getTodayKey()
+      ? 'Hoy'
+      : d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+    return `
+      <div class="cuidado-entry">
+        <div class="cuidado-entry-icon">${x.icon || '✦'}</div>
+        <div class="cuidado-entry-info">
+          <div class="cuidado-entry-name">${x.nombre}</div>
+          <div class="cuidado-entry-meta">${label}${x.notas ? ' · ' + x.notas : ''}</div>
+        </div>
+        <button class="cuidado-entry-del" onclick="deleteCuidado(${x.id})">↩ quitar</button>
+      </div>`;
+  }).join('');
+}
+
+function initCuidados() {
+  document.getElementById('cuidadoFecha').value = getTodayKey();
+  renderCuidadoTipos();
+  renderCuidadosList();
+}
+
+// ══════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════
+
+function openModal(mealId) {
+  const meal = MEALS.find(m => m.id === mealId);
+  currentMealId = mealId;
+  alcoholChoice = 'no';
+
+  document.getElementById('modalTitle').textContent = meal.name;
+  document.getElementById('modalSub').textContent = meal.hint;
+  document.getElementById('foodInput').value = '';
+  document.getElementById('aiFeedback').className = 'ai-feedback';
+  document.getElementById('analyzeBtn').textContent = 'Analizar y registrar ✦';
+  removePhoto();
+
+  // Check if already logged
+  const data = getStorage();
+  const todayData = data[getTodayKey()] || {};
+  const existing = todayData[mealId];
+  if (existing) {
+    document.getElementById('foodInput').value = existing.raw || '';
+    document.getElementById('modalSub').textContent = 'Editando registro anterior';
+  }
+
+  // Set current time
+  const now = new Date();
+  document.getElementById('mealTimeInput').value =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  selectAlcohol('no');
+
+  // Render supplements for this meal
+  renderModalSupls(mealId);
+
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('foodInput').focus(), 300);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function selectAlcohol(choice) {
+  alcoholChoice = choice;
+  ['no','copa','mas'].forEach(c => {
+    document.getElementById(`alc-${c}`).className = 'opt-chip' + (c === choice ? ' sel' : '');
+  });
+}
+
+async function analyzeMeal() {
+  const food = document.getElementById('foodInput').value.trim();
+  const hasPhoto = !!currentPhotoBase64;
+
+  if (!food && !hasPhoto) {
+    document.getElementById('foodInput').focus();
+    document.getElementById('foodInput').placeholder = '← Escribe qué has comido o sube una foto primero';
+    return;
+  }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.textContent = hasPhoto ? 'Analizando foto…' : 'Analizando…';
+  btn.disabled = true;
+
+  const mealName = MEALS.find(m => m.id === currentMealId)?.name || currentMealId;
+  const mealTime = document.getElementById('mealTimeInput').value;
+
+  const systemText = `Eres una nutricionista especializada en mujeres de 30 años con el objetivo de perder 3 kg sin báscula, reduciendo inflamación y retención de líquidos. Plan:
+- Primera ingesta: 10h. Última: máximo 21h.
+- Proteína en cada comida.
+- Hidratos complejos solo antes de las 16h.
+- Cena: solo verdura + proteína.
+- Alcohol: máximo 1 copa vino tinto seco.
+- 2L agua/día. Perfil: acumula en abdomen/cintura, consultora gastronómica, activa.
+
+Responde SIEMPRE en este formato exacto (sin markdown ni asteriscos):
+ANALISIS: [2-3 frases]
+SUGERENCIA: [1 frase concreta]
+PUNTOS: [número del 1 al 5]`;
+
+  // Build message content
+  let messageContent;
+  if (hasPhoto) {
+    messageContent = [
+      {
+        type: 'image',
+        source: { type: 'base64', media_type: currentPhotoType, data: currentPhotoBase64 }
+      },
+      {
+        type: 'text',
+        text: `Analiza este plato. Es el ${mealName} a las ${mealTime}.${food ? ' Nota adicional: ' + food : ''} Alcohol: ${alcoholChoice === 'no' ? 'ninguno' : alcoholChoice === 'copa' ? '1 copa de vino' : 'más de una copa'}.`
+      }
+    ];
+  } else {
+    messageContent = `Analiza este ${mealName} a las ${mealTime}: "${food}". Alcohol: ${alcoholChoice === 'no' ? 'ninguno' : alcoholChoice === 'copa' ? '1 copa de vino' : 'más de una copa'}.`;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemText,
+        messages: [{ role: 'user', content: messageContent }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+
+    const analisis   = text.match(/ANALISIS:\s*(.+?)(?=SUGERENCIA:|$)/s)?.[1]?.trim() || '';
+    const sugerencia = text.match(/SUGERENCIA:\s*(.+?)(?=PUNTOS:|$)/s)?.[1]?.trim() || '';
+    const puntos     = parseInt(text.match(/PUNTOS:\s*(\d)/)?.[1] || '3');
+
+    const stars = '★'.repeat(puntos) + '☆'.repeat(5 - puntos);
+    document.getElementById('aiFeedbackText').innerHTML = `${analisis}<br><br><em>${sugerencia}</em>`;
+    document.getElementById('aiFeedbackStars').textContent = stars;
+    document.getElementById('aiFeedback').className = 'ai-feedback show';
+
+    // Save to storage — use text description or photo placeholder
+    const displayText = food || (hasPhoto ? '[foto del plato]' : '—');
+    const stored = getStorage();
+    const todayKey = getTodayKey();
+    if (!stored[todayKey]) stored[todayKey] = {};
+    stored[todayKey][currentMealId] = {
+      raw: displayText,
+      hasPhoto,
+      summary: displayText.length > 50 ? displayText.substring(0, 47) + '…' : displayText,
+      time: mealTime,
+      alcohol: alcoholChoice,
+      score: puntos,
+      analysis: analisis,
+      suggestion: sugerencia,
+      supls: [...modalSuplSelected],
+    };
+
+    // Sync taken supls to suplChecked so badges update immediately
+    modalSuplSelected.forEach(id => suplChecked.add(id));
+
+    // Check kitchen status
+    const [hh, mm] = mealTime.split(':').map(Number);
+    if (hh >= 21) stored[todayKey]._lateCocina = true;
+
+    saveStorage(stored);  // async fire-and-forget
+    updateScores();
+    renderMealSlots();
+    renderHistorial();
+
+    btn.textContent = 'Guardado ✓';
+    btn.style.background = '#2e7d32';
+    setTimeout(() => {
+      closeModal();
+      btn.textContent = 'Analizar y registrar ✦';
+      btn.style.background = '';
+      btn.disabled = false;
+    }, 1800);
+
+  } catch(e) {
+    const displayText = food || (currentPhotoBase64 ? '[foto del plato]' : '—');
+    const stored = getStorage();
+    const todayKey = getTodayKey();
+    if (!stored[todayKey]) stored[todayKey] = {};
+    stored[todayKey][currentMealId] = {
+      raw: displayText, hasPhoto,
+      summary: displayText.length > 50 ? displayText.substring(0,47)+'…' : displayText,
+      time: mealTime, alcohol: alcoholChoice, score: 3,
+      supls: [...modalSuplSelected],
+    };
+    modalSuplSelected.forEach(id => suplChecked.add(id));
+    saveStorage(stored); // async fire-and-forget
+    renderMealSlots();
+    renderHistorial();
+    btn.textContent = 'Guardado ✓';
+    setTimeout(() => { closeModal(); btn.textContent = 'Analizar y registrar ✦'; btn.disabled = false; }, 1200);
+  }
+}
+
+// ══════════════════════════════════════════════
+// SCORES
+// ══════════════════════════════════════════════
+
+function updateScores() {
+  const data = getStorage();
+  const todayKey = getTodayKey();
+  const todayData = data[todayKey] || {};
+
+  // Today's score
+  const scores = MEALS.map(m => todayData[m.id]?.score).filter(Boolean);
+  const avgToday = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+  const el = document.getElementById('scoreHoy');
+  el.textContent = avgToday ? '★'.repeat(avgToday) : '—';
+  el.style.fontSize = avgToday ? '18px' : '';
+
+  // Weekly average
+  const allDays = Object.keys(data).sort().slice(-7);
+  const allScores = allDays.flatMap(k =>
+    MEALS.map(m => data[k][m.id]?.score).filter(Boolean)
+  );
+  const weekAvg = allScores.length ? (allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1) : null;
+  document.getElementById('scoreMedia').textContent = weekAvg || '—';
+
+  // Streak
+  let streak = 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const k = d.toISOString().split('T')[0];
+    if (data[k] && Object.keys(data[k]).length > 0) streak++;
+    else if (i > 0) break;
+  }
+  document.getElementById('racha').textContent = streak;
+
+  // Kitchen closed on time
+  const onTime = allDays.filter(k => !data[k]._lateCocina).length;
+  document.getElementById('cocinas').textContent = `${onTime}/${allDays.length}`;
+
+  // Cuidados esta semana
+  const cutoff = new Date(Date.now() - 7 * 86400000);
+  const cuidadosWeek = getMasajeStorage().filter(x => new Date(x.fecha + 'T12:00:00') >= cutoff);
+  document.getElementById('masajesTotal').textContent = cuidadosWeek.length;
+}
+
+// ══════════════════════════════════════════════
+// HISTORIAL
+// ══════════════════════════════════════════════
+
+function renderHistorial() {
+  const data = getStorage();
+  const container = document.getElementById('historialContainer');
+  const days = Object.keys(data).filter(k => !k.startsWith('_')).sort().reverse();
+
+  if (!days.length) {
+    container.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--muted);font-size:13px;">Aún no hay registros.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  days.forEach((dayKey, idx) => {
+    const dayData = data[dayKey];
+    const dayNum = Math.floor((new Date(dayKey) - START_DATE) / 86400000) + 1;
+    const scores = MEALS.map(m => dayData[m.id]?.score).filter(Boolean);
+    const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+
+    const div = document.createElement('div');
+    div.className = 'log-day-entry';
+    div.innerHTML = `
+      <div class="log-day-header">
+        <div class="log-day-title">Día ${dayNum} · ${new Date(dayKey + 'T12:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})}</div>
+        ${avg ? `<div class="log-day-score">${'★'.repeat(avg)}</div>` : ''}
+      </div>
+      ${MEALS.filter(m => dayData[m.id]).map(m => `
+        <div class="log-meal-item">
+          <div class="log-meal-time">${dayData[m.id].time || m.time}</div>
+          <div class="log-meal-text">${dayData[m.id].raw || '—'}</div>
+          <div class="log-meal-ok">${dayData[m.id].score >= 4 ? '✦' : dayData[m.id].score >= 3 ? '○' : '△'}</div>
+        </div>
+      `).join('')}
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════════
+// PATRONES
+// ══════════════════════════════════════════════
+
+function renderPatrones() {
+  const data = getStorage();
+  const allDays = Object.keys(data).filter(k=>!k.startsWith('_'));
+  const container = document.getElementById('patronesContent');
+
+  container.innerHTML = '';
+  PATRONES.forEach(p => {
+    // Assess status from data
+    let status = 'check', statusText = 'Sin datos aún';
+
+    if (allDays.length > 0) {
+      if (p.key === 'cocina') {
+        const late = allDays.filter(k => data[k]._lateCocina).length;
+        if (late === 0) { status='ok'; statusText='✓ Respetado siempre'; }
+        else if (late <= 1) { status='warn'; statusText=`⚠ ${late} día tarde`; }
+        else { status='warn'; statusText=`⚠ ${late} días tarde`; }
+      } else if (p.key === 'proteina') {
+        const days = allDays.filter(k => MEALS.some(m => data[k][m.id]));
+        statusText = days.length ? `${days.length} día${days.length>1?'s':''} con registros` : 'Sin datos';
+        status = days.length > 0 ? 'ok' : 'check';
+      } else {
+        statusText = allDays.length + ' día(s) registrado(s)';
+        status = 'ok';
+      }
+    }
+
+    const div = document.createElement('div');
+    div.className = 'patron-card';
+    div.innerHTML = `
+      <div class="patron-icon">${p.icon}</div>
+      <div style="flex:1">
+        <div class="patron-title">${p.title}</div>
+        <div class="patron-desc">${p.desc}</div>
+        <div class="patron-status ${status}">${statusText}</div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════════
+// CHAT
+// ══════════════════════════════════════════════
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function handleEnter(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function quickPrompt(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMsg(text, 'user');
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  const loadingDiv = addMsg('', 'loading');
+  loadingDiv.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+
+  // Build context from today's logs
+  const data = getStorage();
+  const todayData = data[getTodayKey()] || {};
+  const logged = MEALS.filter(m => todayData[m.id]).map(m =>
+    `${m.name}: ${todayData[m.id].raw}`
+  ).join('\n');
+
+  const systemPrompt = `Eres la asistente de nutrición de EEGs tracker, especializada en mujeres de 30 años. Hablas en español, de forma cálida, directa y experta. Nunca eres condescendiente. Das consejos concretos y accionables.
+
+PERFIL DE LA USUARIA:
+- 30 años, 1,63m, aprox 57kg, acumula en abdomen/cintura
+- Consultora gastronómica (come fuera frecuentemente, eventos con alcohol)
+- Camina 1h/día + fuerza 3x/semana
+- Objetivo: perder 3kg en los primeros 14 días (inflamación y retención) y consolidar hábitos en 60 días
+- Alergia al melón
+
+PLAN:
+- Ventana: 10h–21h máximo
+- Proteína en cada ingesta
+- Hidratos complejos solo antes de las 16h
+- Cena: solo verdura + proteína
+- Sin alcohol o máximo 1 copa vino tinto seco
+- 2L agua/día
+- Infusión depurativa 3x/semana (diente de león, hinojo, cola de caballo)
+
+HOY LLEVA REGISTRADO:
+${logged || 'Nada todavía'}
+
+DÍA: ${getDayNumber()} de 60 (objetivo 14 días: -3kg inflamación)
+
+Responde siempre de forma concisa (máximo 3-4 frases). Si te preguntan sobre restaurantes, da sugerencias de qué pedir. Si te preguntan si algo es bueno, responde claramente sí/no y por qué. No uses listas con guiones ni asteriscos para formato.`;
+
+  chatHistory.push({ role: 'user', content: text });
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: chatHistory.slice(-10)
+      })
+    });
+    const resData = await res.json();
+    const reply = resData.content?.[0]?.text || 'Lo siento, hubo un error. Inténtalo de nuevo.';
+
+    chatHistory.push({ role: 'assistant', content: reply });
+    loadingDiv.className = 'msg ai';
+    loadingDiv.innerHTML = reply.replace(/\n/g, '<br>');
+
+  } catch(e) {
+    loadingDiv.className = 'msg ai';
+    loadingDiv.textContent = 'No he podido conectar. Verifica tu conexión e inténtalo de nuevo.';
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  scrollChat();
+}
+
+function addMsg(text, type) {
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  div.textContent = text;
+  document.getElementById('chatMessages').appendChild(div);
+  scrollChat();
+  return div;
+}
+
+function scrollChat() {
+  const c = document.getElementById('chatMessages');
+  c.scrollTop = c.scrollHeight;
+}
+
+// ══════════════════════════════════════════════
+// ZEPP / ACTIVITY
+// ══════════════════════════════════════════════
+
+// Activity storage already defined in cloud layer above
+
+// Drag & drop
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processCSVFile(file);
+});
+
+function handleCSV(event) {
+  const file = event.target.files[0];
+  if (file) processCSVFile(file);
+}
+
+function processCSVFile(file) {
+  const zone = document.getElementById('uploadZone');
+  zone.innerHTML = `<div class="parse-progress"><div class="dots"><span></span><span></span><span></span></div> Procesando ${file.name}…</div>`;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const text = e.target.result;
+    const parsed = parseZeppCSV(text);
+
+    if (!parsed || parsed.length === 0) {
+      zone.innerHTML = `
+        <div class="upload-icon" style="color:var(--muted)">✗</div>
+        <div class="upload-title" style="color:var(--muted)">No se pudo leer el CSV</div>
+        <div class="upload-sub">Asegúrate de que es un archivo de actividad de Zepp.<br><a style="color:var(--granate)" onclick="resetUploadZone()">Intentar de nuevo</a></div>
+      `;
+      return;
+    }
+
+    // Save parsed data
+    const stored = getActivityStorage();
+    parsed.forEach(day => { stored[day.date] = day; });
+    await saveActivityStorage(stored);
+
+    zone.innerHTML = `
+      <div class="upload-icon">✓</div>
+      <div class="upload-title">${parsed.length} día${parsed.length>1?'s':''} importados</div>
+      <div class="upload-sub" style="color:var(--granate);cursor:pointer" onclick="resetUploadZone()">Subir otro archivo</div>
+    `;
+    zone.style.borderColor = 'var(--granate)';
+    zone.style.background = '#fff8f9';
+
+    renderActivityLog();
+    await runCrossAnalysis(parsed);
+  };
+  reader.readAsText(file);
+}
+
+function parseZeppCSV(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+
+  const header = lines[0].toLowerCase().replace(/['"]/g, '');
+  const cols = header.split(',').map(c => c.trim());
+
+  // Map common Zepp column names
+  const idxDate   = cols.findIndex(c => c.includes('date') || c.includes('fecha') || c === 'day');
+  const idxSteps  = cols.findIndex(c => c.includes('step') || c.includes('paso'));
+  const idxKcal   = cols.findIndex(c => c.includes('calor') || c.includes('kcal') || c.includes('energy'));
+  const idxActive = cols.findIndex(c => c.includes('active') || c.includes('activ') || c.includes('min'));
+  const idxSleep  = cols.findIndex(c => c.includes('sleep') || c.includes('sue') || c.includes('hora'));
+  const idxHr     = cols.findIndex(c => c.includes('heart') || c.includes('bpm') || c.includes('fc'));
+
+  // Fallback: try positional (date is usually col 0)
+  const dateCol = idxDate >= 0 ? idxDate : 0;
+
+  const results = [];
+  for (let i = 1; i < lines.length; i++) {
+    const row = lines[i].split(',').map(c => c.trim().replace(/['"]/g, ''));
+    if (!row[dateCol]) continue;
+    const dateRaw = row[dateCol];
+    // Normalize date to YYYY-MM-DD
+    let date = dateRaw;
+    if (/^\d{4}[-/]\d{2}[-/]\d{2}/.test(dateRaw)) {
+      date = dateRaw.substring(0,10).replace(/\//g, '-');
+    } else if (/^\d{2}[-/]\d{2}[-/]\d{4}/.test(dateRaw)) {
+      const parts = dateRaw.split(/[-/]/);
+      date = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    results.push({
+      date,
+      steps:   idxSteps  >= 0 ? parseInt(row[idxSteps])  || 0 : 0,
+      kcal:    idxKcal   >= 0 ? parseInt(row[idxKcal])   || 0 : 0,
+      active:  idxActive >= 0 ? parseInt(row[idxActive]) || 0 : 0,
+      sleep:   idxSleep  >= 0 ? parseFloat(row[idxSleep])|| 0 : 0,
+      hr:      idxHr     >= 0 ? parseInt(row[idxHr])     || 0 : 0,
+      raw: row.join(','),
+    });
+  }
+  return results;
+}
+
+function resetUploadZone() {
+  document.getElementById('uploadZone').innerHTML = `
+    <div class="upload-icon">⌁</div>
+    <div class="upload-title">Toca para subir tu CSV</div>
+    <div class="upload-sub">Archivos: SPORT_DATA.csv, activity.csv o similar</div>
+    <input type="file" id="csvInput" accept=".csv,.txt" style="display:none" onchange="handleCSV(event)">
+  `;
+  document.getElementById('uploadZone').style.borderColor = '';
+  document.getElementById('uploadZone').style.background = '';
+}
+
+async function saveManualActivity() {
+  const pasos   = parseInt(document.getElementById('manPasos').value)   || 0;
+  const minutos = parseInt(document.getElementById('manMinutos').value) || 0;
+  const kcal    = parseInt(document.getElementById('manKcal').value)    || 0;
+  const sueno   = parseFloat(document.getElementById('manSueno').value) || 0;
+
+  if (!pasos && !minutos && !kcal) {
+    alert('Introduce al menos un dato de actividad.');
+    return;
+  }
+
+  const stored = getActivityStorage();
+  const today = getTodayKey();
+  stored[today] = { date: today, steps: pasos, active: minutos, kcal, sleep: sueno, manual: true };
+  await saveActivityStorage(stored);
+
+  renderActivityLog();
+  runCrossAnalysis([stored[today]]);
+  ['manPasos','manMinutos','manKcal','manSueno'].forEach(id => document.getElementById(id).value = '');
+}
+
+function renderActivityLog() {
+  const data = getActivityStorage();
+  const container = document.getElementById('activityLog');
+  const days = Object.keys(data).sort().reverse();
+
+  if (!days.length) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Aún no hay datos.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  days.slice(0, 60).forEach(dayKey => {
+    const d = data[dayKey];
+    const dayNum = Math.floor((new Date(dayKey) - START_DATE) / 86400000) + 1;
+    const label = dayNum >= 1 && dayNum <= 60 ? `Día ${dayNum}` : new Date(dayKey + 'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+
+    // Activity score: steps goal 8000, active goal 60min
+    const stepScore  = Math.min(d.steps  / 8000, 1);
+    const activeScore= Math.min(d.active / 60,   1);
+    const combined   = Math.round(((stepScore + activeScore) / 2) * 5);
+
+    const icons = { 5:'🔥', 4:'💪', 3:'👟', 2:'○', 1:'△' };
+
+    const div = document.createElement('div');
+    div.className = 'activity-day-card';
+    div.innerHTML = `
+      <div class="activity-day-icon">${icons[combined] || '○'}</div>
+      <div class="activity-day-info">
+        <div class="activity-day-title">${label} · ${new Date(dayKey+'T12:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})}</div>
+        <div class="activity-day-stats">
+          ${d.steps ? `👣 ${d.steps.toLocaleString()} pasos` : ''}
+          ${d.active ? ` · ⏱ ${d.active} min` : ''}
+          ${d.kcal ? ` · 🔥 ${d.kcal} kcal` : ''}
+          ${d.sleep ? ` · 💤 ${d.sleep}h` : ''}
+          ${d.manual ? ' · manual' : ''}
+        </div>
+      </div>
+      <div class="activity-day-score">${'★'.repeat(combined)}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function runCrossAnalysis(activityDays) {
+  const section = document.getElementById('zeppAnalysis');
+  const content = document.getElementById('zeppAnalysisContent');
+  section.style.display = 'block';
+  content.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+
+  // Get nutrition data for same days
+  const nutrition = getStorage();
+  const crossData = activityDays.slice(0, 7).map(a => {
+    const n = nutrition[a.date] || {};
+    const meals = MEALS.map(m => n[m.id]?.raw).filter(Boolean);
+    return {
+      date: a.date,
+      steps: a.steps, active: a.active, kcal: a.kcal, sleep: a.sleep,
+      meals: meals.join('; ') || 'sin registro',
+      lateKitchen: n._lateCocina || false,
+    };
+  });
+
+  const prompt = `Eres la nutricionista de EEGs tracker. Analiza estos datos cruzados de actividad física y alimentación de los últimos días para esta usuaria:
+- 30 años, 1,63m, ~57kg, objetivo: perder 3kg en los primeros 14 días y consolidar en 60 días totales
+- Entrena fuerza 3x/semana + camina 1h/día
+- Plan nutricional: ventana 10h-21h, proteína siempre, hidratos antes de las 16h, cena ligera
+
+DATOS CRUZADOS:
+${crossData.map(d => `${d.date}: ${d.steps} pasos, ${d.active}min activos, ${d.kcal}kcal quemadas, ${d.sleep}h sueño | Comidas: ${d.meals} | Cocina tarde: ${d.lateKitchen ? 'sí' : 'no'}`).join('\n')}
+
+Proporciona:
+1. Un resumen del balance actividad-nutrición (2-3 frases)
+2. El patrón más positivo que detectas
+3. La oportunidad de mejora más concreta
+4. Una recomendación específica para los próximos días
+
+Sé directa, cálida y concreta. Sin listas con guiones, en párrafos fluidos. Máximo 200 palabras.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    content.innerHTML = text.replace(/\n\n/g, '<br><br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  } catch(e) {
+    content.innerHTML = 'No se pudo generar el análisis. Comprueba tu conexión.';
+  }
+}
+
+// ══════════════════════════════════════════════
+// SUPLEMENTOS
+// ══════════════════════════════════════════════
+
+let suplChecked = new Set();
+
+function renderSuplSlots() {
+  const todayKey = getTodayKey();
+  const stored = getSuplStorage();
+  const todayData = stored[todayKey] || {};
+  suplChecked = new Set(Object.keys(todayData).filter(k => todayData[k]));
+
+  const container = document.getElementById('suplSlots');
+  if (!container) return;
+  container.innerHTML = '';
+
+  SUPLEMENTOS.forEach(s => {
+    const isChecked = suplChecked.has(s.id);
+    const div = document.createElement('div');
+    div.className = `supl-slot${isChecked ? ' checked' : ''}${s.highlight ? ' highlight-supl' : ''}`;
+    div.id = `supl-${s.id}`;
+    div.onclick = () => toggleSupl(s.id);
+    div.innerHTML = `
+      <div class="supl-icon">${s.icon}</div>
+      <div class="supl-info">
+        <div class="supl-name">${s.name}${s.highlight ? ' <span style="font-size:10px;color:#a06010;font-weight:600;">★ cambio de timing</span>' : ''}</div>
+        <div class="supl-desc">${s.desc}</div>
+      </div>
+      <div class="supl-timing">${s.timing}</div>
+      <div class="supl-check">✓</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function toggleSupl(id) {
+  if (suplChecked.has(id)) { suplChecked.delete(id); }
+  else { suplChecked.add(id); }
+  const el = document.getElementById(`supl-${id}`);
+  if (el) el.className = `supl-slot${suplChecked.has(id) ? ' checked' : ''}`;
+}
+
+async function saveSuplementos() {
+  const todayKey = getTodayKey();
+  const stored = getSuplStorage();
+  const entry = {};
+  SUPLEMENTOS.forEach(s => { entry[s.id] = suplChecked.has(s.id); });
+  stored[todayKey] = entry;
+  await saveSuplStorage(stored);
+
+  // Visual feedback
+  const btn = event.currentTarget;
+  const orig = btn.textContent;
+  btn.textContent = 'Guardado ✓';
+  btn.style.background = '#2e7d32';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1500);
+
+  renderSuplWeekGrid();
+  renderSuplHistorial();
+}
+
+function renderSuplWeekGrid() {
+  const container = document.getElementById('suplWeekGrid');
+  if (!container) return;
+  const stored = getSuplStorage();
+  const days = ['L','M','X','J','V','S','D'];
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Get last 7 days Mon–Sun aligned
+  const weekDays = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    weekDays.push(d);
+  }
+
+  container.innerHTML = `
+    <div class="supl-week-grid">
+      ${weekDays.map(d => `<div class="supl-week-header">${['D','L','M','X','J','V','S'][d.getDay()]}</div>`).join('')}
+      ${weekDays.map(d => {
+        const key = d.toISOString().split('T')[0];
+        const isFuture = d > today;
+        if (isFuture) return `<div class="supl-week-cell future">·</div>`;
+        const dayData = stored[key];
+        if (!dayData) return `<div class="supl-week-cell empty">0</div>`;
+        const taken = SUPLEMENTOS.filter(s => dayData[s.id]).length;
+        const total = SUPLEMENTOS.length;
+        const pct = taken / total;
+        const cls = pct === 1 ? 'full' : pct > 0 ? 'partial' : 'empty';
+        return `<div class="supl-week-cell ${cls}">${taken}</div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:right;margin-top:2px;">de ${SUPLEMENTOS.length} suplementos/día</div>
+  `;
+}
+
+function renderSuplHistorial() {
+  const container = document.getElementById('suplHistorial');
+  if (!container) return;
+  const stored = getSuplStorage();
+  const days = Object.keys(stored).sort().reverse().slice(0, 10);
+
+  if (!days.length) {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Aún no hay registros.</div>';
+    return;
+  }
+  container.innerHTML = '';
+  days.forEach(key => {
+    const d = stored[key];
+    const dateLabel = new Date(key + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+    const taken  = SUPLEMENTOS.filter(s => d[s.id]);
+    const missed = SUPLEMENTOS.filter(s => !d[s.id]);
+    const row = document.createElement('div');
+    row.className = 'supl-hist-row';
+    row.innerHTML = `
+      <div class="supl-hist-date">${dateLabel}</div>
+      <div class="supl-hist-pills">
+        ${taken.map(s => `<span class="supl-pill-chip">${s.name}</span>`).join('')}
+        ${missed.map(s => `<span class="supl-pill-chip missed">${s.name}</span>`).join('')}
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+
+// ══════════════════════════════════════════════
+// DRINK TRACKER — slider por tipo de bebida
+// ══════════════════════════════════════════════
+
+const DRINKS = [
+  { id: 'agua',      name: 'Agua',         icon: '💧', max: 3000, step: 50,  noHydration: false, note: '' },
+  { id: 'gas',       name: 'Agua con gas', icon: '🫧', max: 2000, step: 50,  noHydration: false, note: '' },
+  { id: 'cafe',      name: 'Café / té',    icon: '☕', max: 1000, step: 25,  noHydration: false, note: 'Hidrata parcialmente' },
+  { id: 'tila',      name: 'Infusión',     icon: '🍵', max: 1500, step: 25,  noHydration: false, note: 'Cuenta para la meta' },
+  { id: 'cola',      name: 'Refresco 0',   icon: '🥤', max: 1000, step: 50,  noHydration: true,  note: 'No cuenta para la meta' },
+  { id: 'cerveza',   name: 'Cerveza',      icon: '🍺', max: 1000, step: 50,  noHydration: true,  note: '⚠ Alcohol' },
+  { id: 'vino',      name: 'Vino',         icon: '🍷', max:  750, step: 25,  noHydration: true,  note: '⚠ Alcohol' },
+  { id: 'destilado', name: 'Destilado',    icon: '🥃', max:  300, step: 10,  noHydration: true,  note: '⚠ Alcohol' },
+  { id: 'otros',     name: 'Otros',        icon: '🧃', max: 1500, step: 50,  noHydration: false, note: '' },
+];
+
+// In-memory:
+// _drinkLog    = [ { id, time, items: {agua:500, cafe:150} }, ... ]
+// _drinkCounts = { agua: 0, ... }  sliders en pantalla (pendiente de guardar)
+
+let _drinkLog    = [];
+let _drinkCounts = {};
+
+function _calcDrinkTotals() {
+  const t = {};
+  _drinkLog.forEach(e => Object.entries(e.items).forEach(([id, ml]) => { t[id] = (t[id]||0)+ml; }));
+  return t;
+}
+
+async function loadDrinkToday() {
+  try {
+    const r = await cloudGet('paprika-drinks');
+    _drinkLog = (r || {})[getTodayKey()] || [];
+  } catch { _drinkLog = []; }
+  _drinkCounts = {};
+}
+
+function persistDrinksAsync() {
+  cloudGet('paprika-drinks').then(r => {
+    const data = r || {};
+    data[getTodayKey()] = [..._drinkLog];
+    return cloudSet('paprika-drinks', data);
+  }).catch(() => {});
+}
+
+// Slider moved → sync input + preview total instantly
+function onSliderChange(id, val) {
+  val = parseInt(val) || 0;
+  _drinkCounts[id] = val;
+  const inp = document.getElementById(`dinp-${id}`);
+  if (inp) inp.value = val;
+  const row = document.getElementById(`drow-${id}`);
+  if (row) row.className = 'drink-row' + (val > 0 ? ' has-drinks' : '');
+  renderWaterTotal();
+}
+
+// Input field changed → sync slider + preview total
+function onInputChange(id, val) {
+  const d = DRINKS.find(x => x.id === id);
+  val = Math.max(0, Math.min(parseInt(val) || 0, d?.max || 2000));
+  _drinkCounts[id] = val;
+  const slider = document.getElementById(`dslider-${id}`);
+  if (slider) slider.value = val;
+  const row = document.getElementById(`drow-${id}`);
+  if (row) row.className = 'drink-row' + (val > 0 ? ' has-drinks' : '');
+  renderWaterTotal();
+}
+
+async function saveDrinks() {
+  const hasItems = DRINKS.some(d => (_drinkCounts[d.id] || 0) > 0);
+  if (!hasItems) return;
+
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const items = {};
+  DRINKS.forEach(d => { if ((_drinkCounts[d.id]||0) > 0) items[d.id] = _drinkCounts[d.id]; });
+  _drinkLog.push({ id: Date.now(), time: timeStr, items });
+
+  persistDrinksAsync();
+
+  _drinkCounts = {};
+  renderDrinkList();
+  renderWaterTotal();
+  renderDrinkLog();
+  renderWaterHistorial();
+
+  const btn = document.querySelector('.drinks-save-btn');
+  if (!btn) return;
+  const orig = btn.textContent;
+  btn.textContent = '✓ Añadido';
+  btn.style.background = '#2e7d32';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1600);
+}
+
+function undoDrinkEntry(entryId) {
+  _drinkLog = _drinkLog.filter(e => e.id !== entryId);
+  persistDrinksAsync();
+  renderWaterTotal();
+  renderDrinkLog();
+  renderWaterHistorial();
+}
+
+function renderDrinkLog() {
+  const container = document.getElementById('drinkLog');
+  if (!container) return;
+  if (!_drinkLog.length) {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">Aún no has añadido nada hoy.</div>';
+    return;
+  }
+  container.innerHTML = [..._drinkLog].reverse().map(entry => {
+    const lines = Object.entries(entry.items).map(([id, ml]) => {
+      const d = DRINKS.find(x => x.id === id);
+      return d ? `<div class="drink-log-item">${d.icon} ${d.name} <span>${ml} ml</span></div>` : '';
+    }).join('');
+    const hydTotal = Object.entries(entry.items).reduce((sum, [id, ml]) => {
+      const d = DRINKS.find(x => x.id === id);
+      return sum + (d?.noHydration ? 0 : ml);
+    }, 0);
+    return `
+      <div class="drink-log-entry">
+        <div class="drink-log-time">${entry.time}</div>
+        <div class="drink-log-items">
+          ${lines}
+          ${hydTotal > 0 ? `<div class="drink-log-total">+${hydTotal} ml hidratación</div>` : ''}
+        </div>
+        <button class="drink-log-undo" onclick="undoDrinkEntry(${entry.id})">↩ quitar</button>
+      </div>`;
+  }).join('');
+}
+
+function renderWaterTotal() {
+  const GOAL = 2500;
+  const totals = _calcDrinkTotals();
+  const total = DRINKS.filter(d => !d.noHydration).reduce((sum, d) => {
+    return sum + (totals[d.id] || 0) + (_drinkCounts[d.id] || 0);
+  }, 0);
+  const pct      = Math.min(Math.round((total / GOAL) * 100), 100);
+  const remaining = Math.max(GOAL - total, 0);
+  const amountEl = document.getElementById('waterAmount');
+  const barEl    = document.getElementById('waterBarFill');
+  const pctEl    = document.getElementById('waterPct');
+  const remainEl = document.getElementById('waterRemaining');
+  if (!amountEl) return;
+  amountEl.textContent = total.toLocaleString('es-ES') + ' ml';
+  if (barEl) {
+    barEl.style.width = pct + '%';
+    barEl.style.background = pct >= 100
+      ? 'linear-gradient(90deg,#2e7d32,#4caf50)'
+      : 'linear-gradient(90deg,#4a9edd,#2a6ea6)';
+  }
+  if (pctEl) pctEl.textContent = pct + '%' + (pct >= 100 ? ' · ¡Meta! 🎉' : ' completado');
+  if (remainEl) remainEl.textContent = remaining > 0
+    ? remaining.toLocaleString('es-ES') + ' ml restantes'
+    : '¡Meta conseguida! 🎉';
+}
+
+function renderDrinkList() {
+  const container = document.getElementById('drinkList');
+  if (!container) return;
+  container.innerHTML = '';
+  DRINKS.forEach(d => {
+    const val = _drinkCounts[d.id] || 0;
+    const row = document.createElement('div');
+    row.className = 'drink-row' + (val > 0 ? ' has-drinks' : '');
+    row.id = `drow-${d.id}`;
+    // Build gradient for slider fill
+    const pct = Math.round((val / d.max) * 100);
+    row.innerHTML = `
+      <div class="drink-top">
+        <span class="drink-icon">${d.icon}</span>
+        <span class="drink-name">${d.name}</span>
+        <input class="drink-ml-input" id="dinp-${d.id}" type="number"
+          value="${val}" min="0" max="${d.max}" step="${d.step}"
+          oninput="onInputChange('${d.id}', this.value)"
+          onchange="onInputChange('${d.id}', this.value)">
+        <span class="drink-unit">ml</span>
+      </div>
+      <input class="drink-slider" id="dslider-${d.id}" type="range"
+        min="0" max="${d.max}" step="${d.step}" value="${val}"
+        style="background: linear-gradient(90deg, ${d.noHydration ? '#c09080' : 'var(--granate)'} ${pct}%, #e8d8de ${pct}%)"
+        oninput="onSliderChange('${d.id}', this.value); this.style.background='linear-gradient(90deg, ${d.noHydration ? '#c09080' : 'var(--granate)'} '+Math.round(this.value/${d.max}*100)+'%, #e8d8de '+Math.round(this.value/${d.max}*100)+'%)'">
+      ${d.note ? `<div class="drink-note${d.noHydration ? ' warn' : ''}">${d.note}</div>` : ''}
+    `;
+    container.appendChild(row);
+  });
+}
+
+function renderSuplResumen() {
+  const container = document.getElementById('suplResumen');
+  if (!container) return;
+  const taken = getTakenSuplToday();
+  if (!taken.size) {
+    container.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;">Registra tus comidas para ver los suplementos tomados.</div>';
+    return;
+  }
+  const takenList = SUPLEMENTOS.filter(s => taken.has(s.id));
+  const pendList  = SUPLEMENTOS.filter(s => !taken.has(s.id));
+  container.innerHTML = [
+    ...takenList.map(s => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--rosa-light);">
+        <span style="font-size:18px">${s.icon}</span>
+        <div style="flex:1;font-size:13px;color:var(--vino);font-weight:500">${s.name}</div>
+        <span style="font-size:11px;color:#2e7d32;font-weight:600">✓ tomado</span>
+      </div>`),
+    ...pendList.map(s => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--rosa-light);opacity:0.45;">
+        <span style="font-size:18px">${s.icon}</span>
+        <div style="flex:1;font-size:13px;color:var(--muted)">${s.name}</div>
+        <span style="font-size:10px;color:var(--muted)">${s.timing}</span>
+      </div>`),
+  ].join('');
+}
+
+async function renderWaterHistorial() {
+  const container = document.getElementById('waterHistorial');
+  if (!container) return;
+  try {
+    const allData = await cloudGet('paprika-drinks') || {};
+    allData[getTodayKey()] = [..._drinkLog];
+    const days = Object.keys(allData)
+      .filter(k => Array.isArray(allData[k]) && allData[k].length > 0)
+      .sort().reverse().slice(0, 7);
+    if (!days.length) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">Aún no hay registros.</div>';
+      return;
+    }
+    container.innerHTML = days.map(dayKey => {
+      const log = allData[dayKey] || [];
+      const counts = {};
+      log.forEach(e => Object.entries(e.items).forEach(([id, ml]) => { counts[id] = (counts[id]||0)+ml; }));
+      const total   = DRINKS.filter(d => !d.noHydration).reduce((sum, d) => sum + (counts[d.id] || 0), 0);
+      const pct     = Math.min(Math.round((total / 2500) * 100), 100);
+      const isToday = dayKey === getTodayKey();
+      const d       = new Date(dayKey + 'T12:00:00');
+      const label   = isToday ? 'Hoy' : d.toLocaleDateString('es-ES', { weekday:'short', day:'numeric', month:'short' });
+      const color   = pct >= 100 ? '#2e7d32' : pct >= 60 ? '#4a9edd' : 'var(--muted)';
+      const summary = DRINKS.filter(dr => (counts[dr.id] || 0) > 0)
+        .map(dr => `${dr.icon} ${counts[dr.id]}ml`).join(' · ');
+      return `
+        <div style="background:var(--white);border-radius:10px;padding:10px 14px;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+            <div style="font-size:12px;color:${isToday?'var(--granate)':'var(--muted)'};width:80px;flex-shrink:0;font-weight:${isToday?'600':'400'}">${label}</div>
+            <div style="flex:1;background:#e8f4fd;border-radius:4px;height:6px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;"></div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:${color};width:55px;text-align:right">${total.toLocaleString('es-ES')} ml</div>
+          </div>
+          ${summary ? `<div style="font-size:11px;color:var(--muted);padding-left:92px;line-height:1.8">${summary}</div>` : ''}
+        </div>`;
+    }).join('');
+  } catch {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">No hay datos.</div>';
+  }
+}
+
+async function initWater() {
+  await loadDrinkToday();
+  renderDrinkList();
+  renderWaterTotal();
+  renderDrinkLog();
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  if (name === 'seguimiento')  { updateScores(); renderHistorial(); }
+  if (name === 'patrones')     { renderPatrones(); }
+  if (name === 'zepp')         { renderActivityLog(); }
+  if (name === 'suplementos')  { initWater(); renderSuplResumen(); renderWaterHistorial(); }
+}
+
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+
+updateClock();
+setInterval(updateClock, 30000);
+initApp(); // loads cloud data then renders everything
+
+</script>
+</body>
+</html>
